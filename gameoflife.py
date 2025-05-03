@@ -1,36 +1,31 @@
 import pygame
 import random
 
+from config import *
+from colors import *
+
+
 pygame.init()
-
-BLACK = (0, 0, 0)
-GREY = (128, 128, 128)
-YELLOW = (255, 255, 0)
-
-WIDTH, HEIGHT = 800, 800
-TILE_SIZE = 20
-GRID_WIDTH = WIDTH // TILE_SIZE
-GRID_HEIGHT = HEIGHT // TILE_SIZE
-FPS = 60
-
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-
 clock = pygame.time.Clock()
+
 
 def gen(num):
     return set([(random.randrange(0, GRID_HEIGHT), random.randrange(0, GRID_WIDTH)) for _ in range(num)])
+
 
 def draw_grid(positions):
     for position in positions:
         col, row = position
         top_left = (col * TILE_SIZE, row * TILE_SIZE)
-        pygame.draw.rect(screen, YELLOW, (*top_left, TILE_SIZE, TILE_SIZE))
+        pygame.draw.rect(screen, WHITE, (*top_left, TILE_SIZE, TILE_SIZE))
 
     for row in range(GRID_HEIGHT):
         pygame.draw.line(screen, BLACK, (0, row * TILE_SIZE), (WIDTH, row * TILE_SIZE))
 
     for col in range(GRID_WIDTH):
         pygame.draw.line(screen, BLACK, (col * TILE_SIZE, 0), (col * TILE_SIZE, HEIGHT))
+
 
 def adjust_grid(positions):
     all_neighbors = set()
@@ -54,6 +49,7 @@ def adjust_grid(positions):
     
     return new_positions
 
+
 def get_neighbors(pos):
     x, y = pos
     neighbors = []
@@ -70,11 +66,11 @@ def get_neighbors(pos):
     
     return neighbors
 
+
 def main():
     running = True
     playing = False
     count = 0
-    update_freq = 120
 
     positions = set()
     while running:
@@ -83,7 +79,7 @@ def main():
         if playing:
             count += 1
         
-        if count >= update_freq:
+        if count >= UPDATE_FREQ:
             count = 0
             positions = adjust_grid(positions)
 
@@ -105,14 +101,18 @@ def main():
                     positions.add(pos)
             
             if event.type == pygame.KEYDOWN:
+
+                # To pause or run press space
                 if event.key == pygame.K_SPACE:
                     playing = not playing
                 
+                # To clear the grid press c
                 if event.key == pygame.K_c:
                     positions = set()
                     playing = False
                     count = 0
                 
+                # To generate a random grid press g
                 if event.key == pygame.K_g:
                     positions = gen(random.randrange(4, 10) * GRID_WIDTH)
     
@@ -120,8 +120,8 @@ def main():
         draw_grid(positions)
         pygame.display.update()
 
-
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
