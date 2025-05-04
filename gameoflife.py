@@ -9,9 +9,42 @@ pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
+def draw_context_plane(game_speed: int) -> None:
+    """Zeichnet den Steuerungsbereich des Spiels."""
+    text_margin = 10
+    context_x = GAME_WIDTH + text_margin
+    pygame.draw.rect(screen, BLACK, (GAME_WIDTH, 0, CONTEXT_PLANE_WIDTH, HEIGHT))
 
-def gen(num):
-    return set([(random.randrange(0, GRID_HEIGHT), random.randrange(0, GRID_WIDTH)) for _ in range(num)])
+    # Draw the control plane
+    font = pygame.font.Font(None, 16)
+
+    if game_speed == MAX_UPDATE_FREQ - 1:
+        game_speed = "Max."
+
+    elif game_speed == 0:
+        game_speed = "Min."
+
+    controls_texts = [
+        "Space: Pause/Play",
+        "C: Clear",
+        "R: Reset",
+        "G: Generate Random",
+        "",
+        "UP: Faster",
+        "DOWN: Slower",
+        f"Game Speed: {game_speed}",
+    ]
+    controls = [(control_text, (context_x, (i + 1) * text_margin + i * 16))
+                 for i, control_text in enumerate(controls_texts)]
+
+    for control in controls:
+        text = font.render(control[0], True, WHITE)
+        screen.blit(text, control[1])
+
+
+def gen(num: int) -> set[tuple[int, int]]:
+    """Generiert eine zufällige Menge von Zellen für das Spiel abhängig von `num`."""
+    return set([(random.randrange(0, GRID_WIDTH), random.randrange(0, GRID_HEIGHT)) for _ in range(num)])
 
 
 def draw_grid(positions: tuple[int, int]) -> None:
@@ -23,7 +56,7 @@ def draw_grid(positions: tuple[int, int]) -> None:
         pygame.draw.rect(screen, WHITE, (*top_left, TILE_SIZE, TILE_SIZE))
 
     for row in range(GRID_HEIGHT):
-        pygame.draw.line(screen, BLACK, (0, row * TILE_SIZE), ((WIDTH - CONTROL_PLANE_WIDTH), row * TILE_SIZE))
+        pygame.draw.line(screen, BLACK, (0, row * TILE_SIZE), (GAME_WIDTH, row * TILE_SIZE))
 
     for col in range(GRID_WIDTH + 1):
         pygame.draw.line(screen, BLACK, (col * TILE_SIZE, 0), (col * TILE_SIZE, HEIGHT))
@@ -76,6 +109,7 @@ def get_neighbors(pos: tuple[int, int]) -> list[tuple[int, int]]:
 def main():
     running = True
     playing = False
+    update_freq = INITIAL_UPDATE_FREQ
     count = 0
 
     positions = set()
@@ -87,7 +121,8 @@ def main():
         if playing:
             count += 1
         
-        if count >= UPDATE_FREQ:
+        # Steuere die Geschwindigkeit des Spiels
+        if count >= update_freq:
             count = 0
             positions = next_generation(positions)
 
@@ -129,13 +164,27 @@ def main():
                 
                 # To generate a random grid press g
                 if event.key == pygame.K_g:
-                    positions = gen(random.randrange(1, 2) * GRID_WIDTH + 20)
+                    positions = gen(random.randrange(4, GEN_RANDOM_QUANTIFIER) * GRID_WIDTH)
                     initial_positions = positions.copy()
                     playing = False
                     count = 0
+                
+                if event.key == pygame.K_UP:
+                    if update_freq > 20:
+                        update_freq -= 20
+                    else:
+                        # max speed = update every FPS
+                        update_freq = 1
+                
+                if event.key == pygame.K_DOWN and update_freq < MAX_UPDATE_FREQ:
+                    if update_freq >= 20:
+                        update_freq += 20
+                    else:
+                        update_freq = 20
     
         screen.fill(GREY)
         draw_grid(positions)
+        draw_context_plane(MAX_UPDATE_FREQ - update_freq)
         pygame.display.update()
 
     pygame.quit()
