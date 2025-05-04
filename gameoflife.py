@@ -11,6 +11,16 @@ clock = pygame.time.Clock()
 
 def draw_context_plane(game_speed: int) -> None:
     """Zeichnet den Steuerungsbereich des Spiels."""
+    controls_texts = [
+        "Space: Pause/Play",
+        "C: Clear",
+        "R: Reset",
+        "G: Zufällig",
+        "",
+        "UP: Schneller",
+        "DOWN: Langsamer",
+    ]
+
     text_margin = 10
     context_x = GAME_WIDTH + text_margin
     pygame.draw.rect(screen, BLACK, (GAME_WIDTH, 0, CONTEXT_PLANE_WIDTH, HEIGHT))
@@ -23,17 +33,8 @@ def draw_context_plane(game_speed: int) -> None:
 
     elif game_speed == 0:
         game_speed = "Min."
+    controls_texts.append(f"Game Speed: {game_speed}")
 
-    controls_texts = [
-        "Space: Pause/Play",
-        "C: Clear",
-        "R: Reset",
-        "G: Generate Random",
-        "",
-        "UP: Faster",
-        "DOWN: Slower",
-        f"Game Speed: {game_speed}",
-    ]
     controls = [(control_text, (context_x, (i + 1) * text_margin + i * 16))
                  for i, control_text in enumerate(controls_texts)]
 
@@ -133,6 +134,7 @@ def main():
                 running = False
             
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # Definition zum Setzen und Entfernen von lebengiden Zellen
                 x, y = pygame.mouse.get_pos()
                 col = x // TILE_SIZE
                 row = y // TILE_SIZE
@@ -145,30 +147,30 @@ def main():
                         positions.add(pos)
             
             if event.type == pygame.KEYDOWN:
-
-                # To pause or run press space
+                # Zum Pausieren drücke Leertaste
                 if event.key == pygame.K_SPACE:
                     playing = not playing
                 
-                # To clear the grid press c
+                # Zum leeren des Gitters drücke C
                 if event.key == pygame.K_c:
                     positions = set()
                     playing = False
                     count = 0
                 
-                # To reset the grid to a saved state press r
+                # Zum Reseten des Gitters drücke R
                 if event.key == pygame.K_r:
                     positions = initial_positions.copy()
                     playing = False
                     count = 0
                 
-                # To generate a random grid press g
+                # Zum Generieren eines zufälligen Gitters drücke R
                 if event.key == pygame.K_g:
                     positions = gen(random.randrange(4, GEN_RANDOM_QUANTIFIER) * GRID_WIDTH)
                     initial_positions = positions.copy()
                     playing = False
                     count = 0
                 
+                # Zum Beschleunigen des Spiels drücke Pfeil nach oben
                 if event.key == pygame.K_UP:
                     if update_freq > 20:
                         update_freq -= 20
@@ -176,6 +178,7 @@ def main():
                         # max speed = update every FPS
                         update_freq = 1
                 
+                # Zum Verlangsamen des Spiels drücke Pfeil nach unten
                 if event.key == pygame.K_DOWN and update_freq < MAX_UPDATE_FREQ:
                     if update_freq >= 20:
                         update_freq += 20
