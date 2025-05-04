@@ -14,20 +14,23 @@ def gen(num):
     return set([(random.randrange(0, GRID_HEIGHT), random.randrange(0, GRID_WIDTH)) for _ in range(num)])
 
 
-def draw_grid(positions):
+def draw_grid(positions: tuple[int, int]) -> None:
+    """Zeichnet das Gitter und die Zellen des Spiels auf dem Bildschirm."""
+
     for position in positions:
         col, row = position
         top_left = (col * TILE_SIZE, row * TILE_SIZE)
         pygame.draw.rect(screen, WHITE, (*top_left, TILE_SIZE, TILE_SIZE))
 
     for row in range(GRID_HEIGHT):
-        pygame.draw.line(screen, BLACK, (0, row * TILE_SIZE), (WIDTH, row * TILE_SIZE))
+        pygame.draw.line(screen, BLACK, (0, row * TILE_SIZE), ((WIDTH - CONTROL_PLANE_WIDTH), row * TILE_SIZE))
 
-    for col in range(GRID_WIDTH):
+    for col in range(GRID_WIDTH + 1):
         pygame.draw.line(screen, BLACK, (col * TILE_SIZE, 0), (col * TILE_SIZE, HEIGHT))
 
 
-def adjust_grid(positions):
+def next_generation(positions: tuple[int, int]) -> set[tuple[int, int]]:
+    """Berechne die nächste Generation der Zellen basiert auf den Regels des Game of Life."""
     all_neighbors = set()
     new_positions = set()
 
@@ -35,6 +38,7 @@ def adjust_grid(positions):
         neighbors = get_neighbors(position)
         all_neighbors.update(neighbors)
 
+        # filtere lebendige Nachbarzellen
         neighbors = list(filter(lambda x: x in positions, neighbors))
 
         if len(neighbors) in [2, 3]:
@@ -50,19 +54,21 @@ def adjust_grid(positions):
     return new_positions
 
 
-def get_neighbors(pos):
+def get_neighbors(pos: tuple[int, int]) -> list[tuple[int, int]]:
+    """Gibt die 8er Nachbarn einer Zelle zurück."""
+
     x, y = pos
     neighbors = []
-    for dx in [-1, 0, 1]:
-        if x + dx < 0 or x + dx > GRID_WIDTH:
+    for shift_x in [-1, 0, 1]:
+        if x + shift_x < 0 or x + shift_x > GRID_WIDTH:
             continue
-        for dy in [-1, 0, 1]:
-            if y + dy < 0 or y + dy > GRID_HEIGHT:
+        for shift_y in [-1, 0, 1]:
+            if y + shift_y < 0 or y + shift_y > GRID_HEIGHT:
                 continue
-            if dx == 0 and dy == 0:
+            if shift_x == 0 and shift_y == 0:
                 continue
 
-            neighbors.append((x + dx, y + dy))
+            neighbors.append((x + shift_x, y + shift_y))
     
     return neighbors
 
@@ -73,6 +79,8 @@ def main():
     count = 0
 
     positions = set()
+    initial_positions = set()
+
     while running:
         clock.tick(FPS)
 
@@ -81,9 +89,9 @@ def main():
         
         if count >= UPDATE_FREQ:
             count = 0
-            positions = adjust_grid(positions)
+            positions = next_generation(positions)
 
-        pygame.display.set_caption("Playing" if playing else "Paused")
+        pygame.display.set_caption("Game of Life - Playing" if playing else "Game of Life - Paused")
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -95,10 +103,11 @@ def main():
                 row = y // TILE_SIZE
                 pos = (col, row)
 
-                if pos in positions:
-                    positions.remove(pos)
-                else:
-                    positions.add(pos)
+                if pos[0] < GRID_WIDTH:  # or pos[1] >= GRID_HEIGHT
+                    if pos in positions:
+                        positions.remove(pos)
+                    else:
+                        positions.add(pos)
             
             if event.type == pygame.KEYDOWN:
 
@@ -112,9 +121,18 @@ def main():
                     playing = False
                     count = 0
                 
+                # To reset the grid to a saved state press r
+                if event.key == pygame.K_r:
+                    positions = initial_positions.copy()
+                    playing = False
+                    count = 0
+                
                 # To generate a random grid press g
                 if event.key == pygame.K_g:
-                    positions = gen(random.randrange(4, 10) * GRID_WIDTH)
+                    positions = gen(random.randrange(1, 2) * GRID_WIDTH + 20)
+                    initial_positions = positions.copy()
+                    playing = False
+                    count = 0
     
         screen.fill(GREY)
         draw_grid(positions)
