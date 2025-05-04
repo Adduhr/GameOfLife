@@ -19,10 +19,10 @@ Regeln, im Verlauf der Zeit simuliert.
 - Zum Leeren des Spielfeldes drücke die Taste 'C'
 - Zum Verteilen zufälliger lebendiger Zellen drücke die Taste 'G'
 
-## Muster zum Ausprobieren
+## Muster zum Ausprobieren. Was lässt sch beobachten?
 ```
-001110
-010000
-010000
-010000
+001110  01110
+010000  00010
+010000  00100
+010000  00000
 ```
